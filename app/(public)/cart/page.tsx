@@ -24,9 +24,14 @@ export default function CartPage() {
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
             <div key={`${item.id}-${item.selectedWeight}`} className="bg-white p-4 rounded-3xl border border-gray-100 flex items-center gap-6 shadow-sm">
-              {/* FIXED IMAGE CONTAINER */}
+              
+              {/* FIXED IMAGE CONTAINER: Using item.images?.[0] instead of item.image */}
               <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-50 flex-shrink-0">
-                <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                <img 
+                  src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder-nut.jpg'} 
+                  alt={item.title} 
+                  className="w-full h-full object-cover" 
+                />
               </div>
               
               <div className="flex-1">
