@@ -7,23 +7,23 @@ import { useCartStore } from '@/lib/store'
 export default function ProductDetailClient({ product }: { product: any }) {
   const { addItem } = useCartStore()
   
-  const availableWeights = product?.weights && product.weights.length > 0 
-    ? product.weights 
-    : [{ label: 'Standard', multiplier: 1 }]
+  // Adapted to the new 'weight_options' type: { weight: string; price: number }[]
+  const availableWeights = product?.weight_options && product.weight_options.length > 0 
+    ? product.weight_options 
+    : [{ weight: 'Standard', price: product?.discount_price || product?.actual_price || 0 }]
 
   const [selectedWeight, setSelectedWeight] = useState(availableWeights[0])
   const [added, setAdded] = useState(false)
 
-  const basePrice = product?.discount_price || 0
-  const currentPrice = Math.round(basePrice * (selectedWeight?.multiplier || 1))
+  // Use the exact price from the selected weight option
+  const currentPrice = selectedWeight?.price || product?.discount_price || 0;
 
   const handleAddToCart = () => {
+    // Spreading "...product" ensures the cart gets the 'images' array and all other required fields
     addItem({
-      id: product.id,
-      title: product.title,
+      ...product, 
       selectedPrice: currentPrice,
-      image: product.image,
-      selectedWeight: selectedWeight.label,
+      selectedWeight: selectedWeight.weight,
       quantity: 1
     })
     
@@ -33,12 +33,17 @@ export default function ProductDetailClient({ product }: { product: any }) {
 
   if (!product) return <div className="text-center py-20">Product not found.</div>
 
+  // Adapted to the new 'images' array type
+  const displayImage = product?.images && product.images.length > 0 
+    ? product.images[0] 
+    : '/placeholder-nut.jpg'
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
-      {/* Left: Image Section - FIXED for Visibility */}
+      {/* Left: Image Section */}
       <div className="relative aspect-square rounded-[3rem] overflow-hidden border border-brand-black/5 bg-white shadow-2xl">
         <img 
-          src={product.image} 
+          src={displayImage} 
           alt={product.title} 
           className="absolute inset-0 w-full h-full object-cover z-10"
           onError={(e) => {
@@ -74,9 +79,9 @@ export default function ProductDetailClient({ product }: { product: any }) {
 
         <div className="flex items-baseline gap-4 mb-10">
           <span className="text-4xl font-bold text-brand-green">₹{currentPrice}</span>
-          {product.actual_price > product.discount_price && (
+          {product.actual_price > currentPrice && (
             <span className="text-xl text-brand-black/30 line-through">
-              ₹{Math.round(product.actual_price * (selectedWeight?.multiplier || 1))}
+              ₹{product.actual_price}
             </span>
           )}
         </div>
@@ -86,15 +91,15 @@ export default function ProductDetailClient({ product }: { product: any }) {
           <div className="flex flex-wrap gap-3">
             {availableWeights.map((w: any) => (
               <button
-                key={w.label}
+                key={w.weight}
                 onClick={() => setSelectedWeight(w)}
                 className={`px-8 py-3 rounded-2xl font-bold transition-all border-2 ${
-                  selectedWeight.label === w.label 
+                  selectedWeight.weight === w.weight 
                   ? 'border-brand-black bg-brand-black text-brand-cream shadow-xl' 
                   : 'border-brand-black/10 bg-white text-brand-black'
                 }`}
               >
-                {w.label}
+                {w.weight}
               </button>
             ))}
           </div>
